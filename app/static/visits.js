@@ -6,3 +6,14 @@ if(filePicker){
  document.querySelector('#import-csv').addEventListener('click',async event=>{event.target.disabled=true;try{const response=await fetch('/api/runs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({csv_text:editor.value})});const data=await response.json();if(!response.ok)throw Error(data.detail);location.href=location.pathname+'?run_id='+data.manifest.run_id;}catch(e){editor.setCustomValidity(e.message);editor.reportValidity();}finally{event.target.disabled=false;}});
  editor.addEventListener('input',()=>editor.setCustomValidity(''));
 }
+const credentialLink=document.querySelector('.credential .export');
+if(credentialLink){
+ credentialLink.addEventListener('click',async event=>{
+  event.preventDefault();feedback.textContent='封存校验中…';
+  try{const response=await fetch(credentialLink.href);
+   if(!response.ok){const data=await response.json();feedback.textContent=data.detail||'凭证阻断，已保留旧版';return;}
+   const blob=await response.blob();const href=URL.createObjectURL(blob);const link=document.createElement('a');link.href=href;link.download=document.body.dataset.runId+'.zip';link.click();URL.revokeObjectURL(href);feedback.textContent='凭证已封存：'+(response.headers.get('X-Credential-Seal')||'');
+  }catch(e){feedback.textContent='下载失败：'+e.message;}
+ });
+}
+

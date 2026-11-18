@@ -17,15 +17,22 @@ def read_source(state, fields, aliases):
         header=[aliases.get(v.strip(),v.strip()) for v in original]
         if header!=fields: raise BusinessError('BAD_HEADER','字段或顺序不匹配')
         state['counts']={'input':0,'blank':0,'repeated_header':0,'duplicate':0}
+        state['source_header']={'line':stream.line_num,'cells':list(original)}
+        state['source_rows']=[]
         records=[]
         for cells in stream:
             line=stream.line_num
             state['counts']['input']+=1
             if not cells or not any(v.strip() for v in cells):
-                state['counts']['blank']+=1;continue
+                state['counts']['blank']+=1
+                state['source_rows'].append({'line':line,'kind':'blank','id':'','cells':list(cells)})
+                continue
             if cells==original:
-                state['counts']['repeated_header']+=1;continue
+                state['counts']['repeated_header']+=1
+                state['source_rows'].append({'line':line,'kind':'repeated_header','id':'','cells':list(cells)})
+                continue
             row=dict(zip(header,cells));row['_line']=line
+            state['source_rows'].append({'line':line,'kind':'data','id':row.get('id','').strip(),'cells':list(cells)})
             if len(cells)!=len(header): reject(state,row,'COLUMN_COUNT',f'需要{len(header)}列，实际{len(cells)}列');continue
             if not row.get('id','').strip(): reject(state,row,'MISSING_ID','编号不能为空');continue
             row['id']=row['id'].strip();records.append(row)
@@ -35,12 +42,16 @@ def read_source(state, fields, aliases):
     by_id={}
     for row in records: by_id.setdefault(row['id'],[]).append(row)
     selected=[]
+    dropped=set()
     for key,rows in by_id.items():
         identities={tuple((k,v) for k,v in r.items() if k!='_line') for r in rows}
         if len(identities)>1:
             for row in rows: reject(state,row,'DUPLICATE_CONFLICT','同一编号存在不同原值')
         else:
             selected.append(rows[0]);state['counts']['duplicate']+=len(rows)-1
+            for row in rows[1:]: dropped.add(row['_line'])
+    for entry in state['source_rows']:
+        if entry['line'] in dropped and entry['kind']=='data': entry['kind']='duplicate'
     state['records']=selected
     state['encoding']=encoding
     state['views'][state['context']['keys'][0]]={'rows':[dict(r) for r in selected], 'metrics':{'采信行':len(selected),'隔离行':len(state['quarantine']),'重复行':state['counts']['duplicate']},'title':'原始证据'}

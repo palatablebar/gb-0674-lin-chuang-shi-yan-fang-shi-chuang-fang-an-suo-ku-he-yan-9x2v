@@ -29,6 +29,11 @@
 | TRAP-15 | 检验单位换算 | 静默错算或证据丢失 | 以可复核规则显式处理 | `app/modules/protocol/rules.py` | `tests/test_protocol.py::test_unit_conversion_real` |
 | TRAP-23 | 访视窗末端 | 静默错算或证据丢失 | 以可复核规则显式处理 | `app/modules/windows/rules.py` | `tests/test_windows.py::test_half_open_end` |
 | TRAP-11 | UTC日历归一 | 静默错算或证据丢失 | 以可复核规则显式处理 | `app/modules/windows/rules.py` | `tests/test_windows.py::test_utc_day_equivalence` |
+| TRAP-26 | 凭证因生成时刻或展示顺序变化而失效 | 复核人无法确认同一业务内容 | seal 只覆盖业务内容，固定 ZIP 元数据，按序归一 | `app/credential.py` | `tests/test_credential.py::test_seal_is_reproducible_across_generations` |
+| TRAP-27 | 包只能回看页面，无法证明结果/访视窗/原始行同版 | 复核人无法定位责任行 | 包内 `evidence.json` 逐访视记录采信结果、责任行号与原始单元格，附 `source.csv` 与 `verify.py` | `app/credential.py` | `tests/test_credential.py::test_bundle_carries_records_and_verification_basis` |
+| TRAP-28 | 采信结果或访视窗变化后凭证被静默替换 | 独立复核失去依据 | 变化时 409 阻断并指出受试者访视，旧版保持当前 | `app/main.py` | `tests/test_credential.py::test_export_blocks_changed_results_and_keeps_old_credential` |
+| TRAP-29 | 替换失败后旧凭证丢失或原始行缺失 | 复核链路中断 | 凭证版本事务化保留，原始行台账逐行核对 | `app/store.py`、`app/credential.py` | `tests/test_credential.py::test_replace_failure_keeps_old_credential` |
+| TRAP-30 | 同值重复、空行、重复表头在凭证中消失 | 原始行无法追溯 | 源台账保留 `data/duplicate/rejected/repeated_header/blank` 及行号 | `app/modules/intake/reader.py` | `tests/test_credential.py::test_every_input_line_is_retained` |
 
 ## 对账规则
 

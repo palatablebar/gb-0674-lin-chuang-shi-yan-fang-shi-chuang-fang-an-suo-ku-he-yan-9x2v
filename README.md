@@ -13,7 +13,11 @@ docker compose exec -T app pytest -q
 
 各模块页面对应 `/<模块英文名>`，各模块执行入口为 `POST /api/<模块英文名>`，不传参即可独立演示。完整运行 `POST /api/runs` 支持 `dataset`（dirty/clean/legacy）、`csv_text` 与 `overrides` 参数。批次历史 `GET /api/runs`，详情 `GET /api/runs/{run_id}`。
 
-同输入与规则版本生成相同批号，只保留一条批次。复核入口 `POST /api/runs/{run_id}/review` 提交当前 `revision`，陈旧提交409。归档包只有一个下载入口 `GET /api/export/{run_id}`，含证据和运行摘要。原始隔离在页面同屏显示。
+同输入与规则版本生成相同批号，只保留一条批次。复核入口 `POST /api/runs/{run_id}/review` 提交当前 `revision`，陈旧提交409。原始隔离在页面同屏显示。
+
+冻结凭证以「下载即封存」交付。凭证编号 `seal` 只由源文件字节、方案/受试者/访视窗上下文、全部原始行台账、每个受试者每次访视的采信结果与责任行、偏离/复检问题/隔离行/锁库判定决定；生成时刻、耗时、来源别名、复核版本/状态和展示顺序不在封存边界内，因此同一业务内容重新生成或重新下载仍是同一凭证。包内含 `manifest.json`、`evidence.json`、原始 `source.csv`、`checksums.json`、`SEAL.md` 与只依赖标准库的 `verify.py`；复核人可离线自检或与另一份凭证逐访视比对。
+
+采信结果或访视窗一旦变化，`GET /api/export/{run_id}` 返回 409 `CREDENTIAL_BLOCKED` 并指出具体受试者与访视，旧版凭证仍保持当前版本、可继续下载。`GET /api/credential/{run_id}` 查看当前凭证与历史版本，`GET /api/credential/{run_id}/{seal}` 下载指定版本，`POST /api/credential/verify?run_id=` 提交凭证复核，`POST /api/credential/{run_id}/replace` 替换当前凭证；替换失败时保留旧版，原始行台账不会丢失记录。
 
 SQLite使用命名卷，容器重启后保留历史。要重建演示可在Compose中改用新的卷名称，保留旧卷。
 

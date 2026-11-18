@@ -62,6 +62,10 @@
     "deviations": "偏离",
     "retest_issues": "复检问题",
     "blocked": "阻断项",
-    "status": "状态"
+    "status": "状态",
+    "window": "访视窗",
+    "primary_line": "首次记录行",
+    "selected_line": "采信行",
+    "blocking": "阻断原因"
   }
 }
